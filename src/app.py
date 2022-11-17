@@ -5,20 +5,29 @@ from infra.depara.tickers import get_depara_tickers
 from infra.entities.tickers import get_depara_database_tickers
 
 
-print(datetime.datetime.now())
+print(f"Iniciando processo....: {datetime.datetime.now()}")
 
 # importa xls
 dataset = pd.read_excel('src/files/pm.xlsx')
 
+print(f"Lido o arquivo....: {datetime.datetime.now()}")
+
 # renomeia colunas com baseno depara
 dataset.rename(columns=get_depara_tickers(), inplace=True)
 
+print(f"Renomeando as colunas....: {datetime.datetime.now()}")
 
-#Tratando campo ValorMovimentacao
-#dataset['ValorMovimentacao'] = dataset['ValorMovimentacao'].replace('[R$ ]', '', regex=True).astype(float)
+
+print(f"Substituir valor nulo para 0....: {datetime.datetime.now()}")
+# Substituir valor nulo para 0 
+dataset = dataset.fillna(value=0)
 
 #cria indice novo agrupando por ticker
+print(f"cria indice novo agrupando por ticker....: {datetime.datetime.now()}")
 dataset['TickerItem'] = dataset.groupby(['Conta']).cumcount()+1
+
+
+print(f"cria colunas novas conforme EsbocoPm....: {datetime.datetime.now()}")
 
 #cria colunas novas conforme EsbocoPm
 dataset['QuantidadeLa'] = 0
@@ -31,6 +40,7 @@ dataset['EstoqueFinal'] = 0
 dataset['PrecoMedio'] = 0
 
 
+print(f"realiza as alterações estoque linha anterior....: {datetime.datetime.now()}")
 #realiza as alterações estoque linha anterior
 for i, row in dataset.iterrows():
     
@@ -63,11 +73,16 @@ for i, row in dataset.iterrows():
 
 
 
+# Passa colunas para string
+print(f"Passa colunas para string....: {datetime.datetime.now()}")
+dataset = dataset.astype(str)
+
+print(f"Conexão com o Banco de Dados....: {datetime.datetime.now()}")
 db = DBConnectionHandler()
 engine = db.get_engine()
 tickerDeparaDb = get_depara_database_tickers()
 
-
+print(f"Enviando dados....: {datetime.datetime.now()}")
 dataset.to_sql(
     "Tickers", 
     con = engine,
@@ -75,8 +90,10 @@ dataset.to_sql(
     schema='dbo',   
     index=False,
     chunksize=1000
-    #dtype=tickerDeparaDb
+#    dtype=tickerDeparaDb
 )
 
+print(f"Processo Finalizado...: {datetime.datetime.now()}")
 
-#print(dataset)
+
+
